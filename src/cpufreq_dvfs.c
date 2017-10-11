@@ -7,6 +7,8 @@
  * published by the Free Software Foundation.
  */
 
+#define DEBUG
+
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/cpufreq.h>
@@ -27,11 +29,19 @@ static struct cpufreq_governor cpufreq_gov_dvfs = {
 
 static int __init cpufreq_gov_dvfs_init(void)
 {
+	#ifdef DEBUG
+	printk(KERN_INFO "dvfs: init\n");
+	#endif
+
 	return cpufreq_register_governor(&cpufreq_gov_dvfs);
 }
 
 static void __exit cpufreq_gov_dvfs_exit(void)
 {
+	#ifdef DEBUG
+	printk(KERN_INFO "dvfs: exit\n");
+	#endif
+
 	cpufreq_unregister_governor(&cpufreq_gov_dvfs);
 }
 
