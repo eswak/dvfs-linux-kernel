@@ -14,6 +14,22 @@
 #include <linux/cpufreq.h>
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/netdevice.h>
+
+static __u64 print_net_stats(void){
+	struct net_device *dev;
+	struct rtnl_link_stats64 temp;
+	struct rtnl_link_stats64 *net_stats;
+	__u64 tr_bytes;
+
+	dev = dev_get_by_name(&init_net, "eth0");
+	net_stats = dev_get_stats(dev, &temp);
+        tr_bytes = net_stats->tx_bytes + net_stats->rx_bytes;
+
+        printk(KERN_INFO "network bytes : %llu", tr_bytes);
+        return tr_bytes;
+}
+
 
 static void cpufreq_gov_dvfs_limits(struct cpufreq_policy *policy)
 {
@@ -32,6 +48,8 @@ static int __init cpufreq_gov_dvfs_init(void)
 	#ifdef DEBUG
 	printk(KERN_INFO "dvfs: init\n");
 	#endif
+
+	print_net_stats();
 
 	return cpufreq_register_governor(&cpufreq_gov_dvfs);
 }
