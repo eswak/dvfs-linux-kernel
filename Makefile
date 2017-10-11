@@ -21,5 +21,7 @@ clean:
 	rm -f ./src/.*.o.cmd
 insmod:
 	sudo insmod src/cpufreq_dvfs.ko
+rmmod:
+	sudo rmmod cpufreq_dvfs
 
 endif
