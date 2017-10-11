@@ -23,5 +23,7 @@ insmod:
 	sudo insmod src/cpufreq_dvfs.ko
 rmmod:
 	sudo rmmod cpufreq_dvfs
+log:
+	tail -fn 1000 /var/log/kern.log
 
 endif
