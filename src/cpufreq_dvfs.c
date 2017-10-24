@@ -9,8 +9,6 @@
 
 #define DEBUG
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-
 #include <linux/cpufreq.h>
 #include <linux/init.h>
 #include <linux/module.h>
@@ -22,14 +20,30 @@ static __u64 print_net_stats(void){
 	struct rtnl_link_stats64 *net_stats;
 	__u64 tr_bytes;
 
-	dev = dev_get_by_name(&init_net, "eth0");
+	//char* interface = "eth0";
+	char* interface = "ens33";
+	dev = dev_get_by_name(&init_net, interface);
+	if (!dev) {
+		printk(KERN_ERR "interface %s not found. Available interfaces :\n", interface);
+
+		read_lock(&dev_base_lock);
+
+		dev = first_net_device(&init_net);
+		while (dev) {
+			printk(KERN_ERR " - [%s]\n", dev->name);
+			dev = next_net_device(dev);
+		}
+		read_unlock(&dev_base_lock);
+
+		return 0;
+	}
+
 	net_stats = dev_get_stats(dev, &temp);
         tr_bytes = net_stats->tx_bytes + net_stats->rx_bytes;
 
         printk(KERN_INFO "network bytes : %llu", tr_bytes);
         return tr_bytes;
 }
-
 
 static void cpufreq_gov_dvfs_limits(struct cpufreq_policy *policy)
 {
