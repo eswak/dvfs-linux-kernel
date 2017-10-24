@@ -19,9 +19,9 @@ clean:
 	rm -f ./src/.*.ko.cmd
 	rm -f ./src/*.mod.o
 	rm -f ./src/.*.o.cmd
-insmod:
+install:
 	sudo insmod src/cpufreq_dvfs.ko
-rmmod:
+remove:
 	sudo rmmod cpufreq_dvfs
 log:
 	tail -fn 1000 /var/log/kern.log

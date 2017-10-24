@@ -27,10 +27,10 @@ make build # compile the .c files & create the .ko (kernel object) patch file
 make clean # clean all the compiled files (.o, etc...)
 ```
 ```shell
-make insmod # install the mod on your current VM (you need to build it first of course)
+make install # install the mod on your current VM (you need to build it first of course)
 ```
 ```shell
-make rmmod # uninstall the mod
+make remove # uninstall the mod
 ```
 ```shell
 make log # show the kernel logs; any new log will be displayed in real time
