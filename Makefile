@@ -24,6 +24,7 @@ install:
 remove:
 	sudo rmmod cpufreq_dvfs
 log:
-	tail -fn 1000 /var/log/kern.log
+	#tail -fn 1000 /var/log/kern.log
+	dmesg
 
 endif
