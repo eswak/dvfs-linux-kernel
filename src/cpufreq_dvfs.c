@@ -20,8 +20,39 @@
 #include <linux/percpu-defs.h>
 #include <linux/slab.h>
 #include <linux/tick.h>
-
+#include <linux/netdevice.h>
 #include "cpufreq_dvfs.h"
+
+static __u64 print_net_stats(void){
+	struct net_device *dev;
+	struct rtnl_link_stats64 temp;
+	struct rtnl_link_stats64 *net_stats;
+	__u64 tr_bytes;
+
+	//char* interface = "eth0";
+	char* interface = "ens33";
+	dev = dev_get_by_name(&init_net, interface);
+	if (!dev) {
+		printk(KERN_ERR "interface %s not found. Available interfaces :\n", interface);
+
+		read_lock(&dev_base_lock);
+
+		dev = first_net_device(&init_net);
+		while (dev) {
+			printk(KERN_ERR " - [%s]\n", dev->name);
+			dev = next_net_device(dev);
+		}
+		read_unlock(&dev_base_lock);
+
+		return 0;
+	}
+
+	net_stats = dev_get_stats(dev, &temp);
+        tr_bytes = net_stats->tx_bytes + net_stats->rx_bytes;
+
+        printk(KERN_INFO "network bytes : %llu", tr_bytes);
+        return tr_bytes;
+}
 
 /* DVFS governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(80)
