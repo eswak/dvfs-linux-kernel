@@ -170,6 +170,8 @@ static void dbs_freq_increase(struct cpufreq_policy *policy, unsigned int freq)
  */
 static void dvfs_update(struct cpufreq_policy *policy)
 {
+	//printk(KERN_INFO "policy->cpuinfo : %)", policy->cpuinfo);
+
 	struct policy_dbs_info *policy_dbs = policy->governor_data;
 	struct dvfs_policy_dbs_info *dbs_info = to_dbs_info(policy_dbs);
 	struct dbs_data *dbs_data = policy_dbs->dbs_data;
@@ -512,6 +514,13 @@ EXPORT_SYMBOL_GPL(dvfs_unregister_powersave_bias_handler);
 
 static int __init cpufreq_gov_dbs_init(void)
 {
+	unsigned int n_cpu, i;
+	n_cpu = 0;
+	for_each_online_cpu(i) {
+		n_cpu++;
+	}
+	printk(KERN_INFO "DVFS governor __init - online CPUs : %u)", n_cpu);
+
 	return cpufreq_register_governor(CPU_FREQ_GOV_DVFS);
 }
 

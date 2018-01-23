@@ -9,6 +9,8 @@
  * published by the Free Software Foundation.
  */
 
+#ifndef __CPUFREQ_GOVERNOR_H__
+#define __CPUFREQ_GOVERNOR_H__
 #include "cpufreq_governor.h"
 
 struct dvfs_policy_dbs_info {
@@ -27,3 +29,5 @@ static inline struct dvfs_policy_dbs_info *to_dbs_info(struct policy_dbs_info *p
 struct dvfs_dbs_tuners {
 	unsigned int powersave_bias;
 };
+
+#endif
