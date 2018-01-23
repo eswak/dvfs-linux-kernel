@@ -23,6 +23,21 @@
 #include <linux/netdevice.h>
 #include "cpufreq_dvfs.h"
 
+/* freq_table_length: return the freq_table length or -1
+ * @freq_table
+ */
+static int freq_table_length(struct cpufreq_frequency_table *freq_table){
+	unsigned int i;
+
+	if (!freq_table)
+		return -1;
+
+
+	for(i=0 ; (freq_table[i].frequency != CPUFREQ_TABLE_END) ; i++) ;
+
+	return i;
+}
+
 static __u64 print_net_stats(void){
 	struct net_device *dev;
 	struct rtnl_link_stats64 temp;
@@ -171,6 +186,7 @@ static void dbs_freq_increase(struct cpufreq_policy *policy, unsigned int freq)
 static void dvfs_update(struct cpufreq_policy *policy)
 {
 	//printk(KERN_INFO "policy->cpuinfo : %)", policy->cpuinfo);
+	printk(KERN_INFO "dvfs_update: policy min/current/max : %u - %u - %u", policy->min, policy->cur, policy->max);
 
 	struct policy_dbs_info *policy_dbs = policy->governor_data;
 	struct dvfs_policy_dbs_info *dbs_info = to_dbs_info(policy_dbs);
@@ -440,6 +456,8 @@ static void dvfs_start(struct cpufreq_policy *policy)
 {
 	struct dvfs_policy_dbs_info *dbs_info = to_dbs_info(policy->governor_data);
 
+	printk(KERN_INFO "freq_table_length : %u", freq_table_length(policy->freq_table));
+
 	dbs_info->sample_type = DVFS_NORMAL_SAMPLE;
 	dvfs_powersave_bias_init(policy);
 }
@@ -519,7 +537,7 @@ static int __init cpufreq_gov_dbs_init(void)
 	for_each_online_cpu(i) {
 		n_cpu++;
 	}
-	printk(KERN_INFO "DVFS governor __init - online CPUs : %u)", n_cpu);
+	printk(KERN_INFO "DVFS governor __init - online CPUs : %u", n_cpu);
 
 	return cpufreq_register_governor(CPU_FREQ_GOV_DVFS);
 }
