@@ -14,7 +14,7 @@ sudo apt install linux-headers-4.10.0-28-generic
 sudo apt install linux-image-4.10.0-28-generic
 
 # install utils that we'll use to switch CPU governor
-sudo apt install apt install cpufrequtils
+sudo apt install cpufrequtils
 ```
 5) You're done !
 
