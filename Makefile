@@ -35,6 +35,6 @@ set:
 	sudo cpufreq-set -r -g dvfs
 
 unset:
-	sudo cpuferq-set -r -g ondemand
+	sudo cpufreq-set -r -g ondemand
 
 endif

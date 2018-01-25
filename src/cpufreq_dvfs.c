@@ -26,17 +26,6 @@
 /* freq_table_length: return the freq_table length or -1
  * @freq_table
  */
-static int freq_table_length(struct cpufreq_frequency_table *freq_table){
-	unsigned int i;
-
-	if (!freq_table)
-		return -1;
-
-
-	for(i=0 ; (freq_table[i].frequency != CPUFREQ_TABLE_END) ; i++) ;
-
-	return i;
-}
 
 static __u64 print_net_stats(void){
 	struct net_device *dev;
@@ -187,6 +176,12 @@ static void dvfs_update(struct cpufreq_policy *policy)
 {
 	//printk(KERN_INFO "policy->cpuinfo : %)", policy->cpuinfo);
 	printk(KERN_INFO "dvfs_update: policy min/current/max : %u - %u - %u", policy->min, policy->cur, policy->max);
+
+
+        int i;
+        for(i=0 ; (policy->freq_table[i].frequency != CPUFREQ_TABLE_END) ; i++) {
+            printk(KERN_INFO "\t frequency: %u", policy->freq_table[i].frequency);
+        }
 
 	struct policy_dbs_info *policy_dbs = policy->governor_data;
 	struct dvfs_policy_dbs_info *dbs_info = to_dbs_info(policy_dbs);
