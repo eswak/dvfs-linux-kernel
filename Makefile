@@ -19,12 +19,22 @@ clean:
 	rm -f ./src/.*.ko.cmd
 	rm -f ./src/*.mod.o
 	rm -f ./src/.*.o.cmd
+
 install:
+	sudo rmmod cpufreq_dvfs
 	sudo insmod src/cpufreq_dvfs.ko
+
 remove:
 	sudo rmmod cpufreq_dvfs
+
 log:
 	#tail -fn 1000 /var/log/kern.log
 	dmesg
+
+set:
+	sudo cpufreq-set -r -g dvfs
+
+unset:
+	sudo cpuferq-set -r -g ondemand
 
 endif
