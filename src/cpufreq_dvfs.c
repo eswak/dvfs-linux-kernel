@@ -23,14 +23,16 @@
 #include <linux/netdevice.h>
 #include "cpufreq_dvfs.h"
 
+static __u64 old_tr_bytes = 0;
+
 static __u64 print_net_stats(void){
 	struct net_device *dev;
 	struct rtnl_link_stats64 temp;
 	struct rtnl_link_stats64 *net_stats;
-	__u64 tr_bytes;
+	__u64 tr_bytes, diffByte;
 
 	//char* interface = "eth0";
-	char* interface = "ens33";
+	char* interface = "wlp3s0";
 	dev = dev_get_by_name(&init_net, interface);
 	if (!dev) {
 		printk(KERN_ERR "interface %s not found. Available interfaces :\n", interface);
@@ -50,8 +52,11 @@ static __u64 print_net_stats(void){
 	net_stats = dev_get_stats(dev, &temp);
         tr_bytes = net_stats->tx_bytes + net_stats->rx_bytes;
 
-        printk(KERN_INFO "network bytes : %llu", tr_bytes);
-        return tr_bytes;
+        diffByte = tr_bytes - old_tr_bytes;
+        old_tr_bytes = tr_bytes;
+            
+        printk(KERN_INFO "network bytes : %llu KB", diffByte / 1024);
+        return diffByte;
 }
 
 /* DVFS governor macros */
@@ -173,11 +178,14 @@ static void dvfs_update(struct cpufreq_policy *policy)
 	//printk(KERN_INFO "policy->cpuinfo : %)", policy->cpuinfo);
 	printk(KERN_INFO "dvfs_update: policy min/current/max : %u - %u - %u", policy->min, policy->cur, policy->max);
 
-
+        /*
         int i;
         for(i=0 ; (policy->freq_table[i].frequency != CPUFREQ_TABLE_END) ; i++) {
             printk(KERN_INFO "\t frequency: %u", policy->freq_table[i].frequency);
         }
+        */
+        print_net_stats();
+
 
 	struct policy_dbs_info *policy_dbs = policy->governor_data;
 	struct dvfs_policy_dbs_info *dbs_info = to_dbs_info(policy_dbs);
