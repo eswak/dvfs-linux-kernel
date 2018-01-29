@@ -1,8 +1,12 @@
+SHELL := /bin/bash		# use bash syntax
+
 ifneq ($(KERNELRELEASE),)
 obj-m	:= src/cpufreq_dvfs.o
 else
 KDIR	?= /lib/modules/`uname -r`/build
 PWD	:= $(shell pwd)
+NBPROC 	?= $(shell cat /proc/cpuinfo | grep processor | wc -l)
+
 build:
 	$(MAKE) -C $(KDIR) M=$(PWD)
 clean:
@@ -31,9 +35,15 @@ log:
 	dmesg
 
 set:
-	sudo cpufreq-set -r -g dvfs
+	@number=0 ; while [[ $$number -lt ${NBPROC} ]] ; do \
+	           sudo cpufreq-set -c $$number -g dvfs ; \
+		   ((number = number + 1)) ; \
+	done
 
 unset:
-	sudo cpufreq-set -r -g ondemand
+	@number=0 ; while [[ $$number -lt ${NBPROC} ]] ; do \
+	           sudo cpufreq-set -c $$number -g ondemand ; \
+		   ((number = number + 1)) ; \
+	done
 
 endif
