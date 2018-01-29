@@ -23,10 +23,6 @@
 #include <linux/netdevice.h>
 #include "cpufreq_dvfs.h"
 
-/* freq_table_length: return the freq_table length or -1
- * @freq_table
- */
-
 static __u64 print_net_stats(void){
 	struct net_device *dev;
 	struct rtnl_link_stats64 temp;
@@ -450,8 +446,6 @@ static void dvfs_exit(struct dbs_data *dbs_data)
 static void dvfs_start(struct cpufreq_policy *policy)
 {
 	struct dvfs_policy_dbs_info *dbs_info = to_dbs_info(policy->governor_data);
-
-	printk(KERN_INFO "freq_table_length : %u", freq_table_length(policy->freq_table));
 
 	dbs_info->sample_type = DVFS_NORMAL_SAMPLE;
 	dvfs_powersave_bias_init(policy);

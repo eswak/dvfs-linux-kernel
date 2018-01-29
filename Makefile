@@ -21,7 +21,6 @@ clean:
 	rm -f ./src/.*.o.cmd
 
 install:
-	sudo rmmod cpufreq_dvfs
 	sudo insmod src/cpufreq_dvfs.ko
 
 remove:
