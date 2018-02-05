@@ -32,7 +32,7 @@
  */
 #define NB_VALUE_FOR_MEAN   10
 static __u8 meanCounter = 0;
-static __u64 mean = 0, download_speed = 0;
+static unsigned int mean = 0, download_speed = 0;
 static __u64 old_tr_bytes = 0;
 
 static void update_download_speed(void){
@@ -56,7 +56,7 @@ static void update_download_speed(void){
 		}
 		read_unlock(&dev_base_lock);
 
-		return 0;
+		return;
 	}
 
 	net_stats = dev_get_stats(dev, &temp);
