@@ -23,9 +23,19 @@
 #include <linux/netdevice.h>
 #include "cpufreq_dvfs.h"
 
+/* Used for computation of the download speed
+ * DownloadSpeed is an estimation based of the average volume of data (in Byte) received between
+ * ten execution of the governor. Ondemand governor is called every 10 000 uS (10 ms -> 100 times
+ * in 1 seconds). The value is in KB and store in global variable "download_speed"
+ *
+ * Formula: mean / NB_VALUE_USED / 1024 * 100
+ */
+#define NB_VALUE_FOR_MEAN   10
+static __u8 meanCounter = 0;
+static __u64 mean = 0, download_speed = 0;
 static __u64 old_tr_bytes = 0;
 
-static __u64 print_net_stats(void){
+static void update_download_speed(void){
 	struct net_device *dev;
 	struct rtnl_link_stats64 temp;
 	struct rtnl_link_stats64 *net_stats;
@@ -52,11 +62,22 @@ static __u64 print_net_stats(void){
 	net_stats = dev_get_stats(dev, &temp);
         tr_bytes = net_stats->tx_bytes + net_stats->rx_bytes;
 
+        // compute the number of packet received since the last call of the governor
         diffByte = tr_bytes - old_tr_bytes;
         old_tr_bytes = tr_bytes;
-            
-        printk(KERN_INFO "network bytes : %llu KB", diffByte / 1024);
-        return diffByte;
+
+        // Add this value to the mean and compute the average download speed every NB_VALUE_FOR_MEAN 
+        // execution.
+        if (meanCounter != NB_VALUE_FOR_MEAN) {
+            meanCounter += 1;
+            mean += diffByte;
+
+        } else {
+            meanCounter = 0;
+            download_speed = mean / NB_VALUE_FOR_MEAN;
+            printk(KERN_INFO "download speed: %u", download_speed / 1024 * 100);
+            mean = 0;
+        }
 }
 
 /* DVFS governor macros */
@@ -176,7 +197,7 @@ static void dbs_freq_increase(struct cpufreq_policy *policy, unsigned int freq)
 static void dvfs_update(struct cpufreq_policy *policy)
 {
 	//printk(KERN_INFO "policy->cpuinfo : %)", policy->cpuinfo);
-	printk(KERN_INFO "dvfs_update: policy min/current/max : %u - %u - %u", policy->min, policy->cur, policy->max);
+	//printk(KERN_INFO "dvfs_update: policy min/current/max : %u - %u - %u", policy->min, policy->cur, policy->max);
 
         /*
         int i;
@@ -184,6 +205,7 @@ static void dvfs_update(struct cpufreq_policy *policy)
             printk(KERN_INFO "\t frequency: %u", policy->freq_table[i].frequency);
         }
         */
+        update_download_speed();
         print_net_stats();
 
 
@@ -192,6 +214,9 @@ static void dvfs_update(struct cpufreq_policy *policy)
 	struct dbs_data *dbs_data = policy_dbs->dbs_data;
 	struct dvfs_dbs_tuners *dvfs_tuners = dbs_data->tuners;
 	unsigned int load = dbs_update(policy);
+
+        // Print the samplig rate -- The amount of time the governor is called (in uS)
+        //printk(KERN_INFO "\t sampling rate: %u",dbs_data->sampling_rate);
 
 	dbs_info->freq_lo = 0;
 
