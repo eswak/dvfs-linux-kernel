@@ -42,7 +42,7 @@ static void update_download_speed(void){
 	__u64 tr_bytes, diffByte;
 
 	//char* interface = "eth0";
-	char* interface = "wlp3s0";
+	char* interface = "wlp2s0";
 	dev = dev_get_by_name(&init_net, interface);
 	if (!dev) {
 		printk(KERN_ERR "interface %s not found. Available interfaces :\n", interface);
@@ -185,8 +185,10 @@ static void dvfs_update(struct cpufreq_policy *policy)
 	struct dvfs_dbs_tuners *dvfs_tuners = dbs_data->tuners;
 	struct cpufreq_frequency_table *freq_table = policy->freq_table;
 	unsigned int freq_next, min_f, max_f;
-	unsigned int network_load = 0;
 	unsigned int n_frequencies = 0;
+	unsigned int network_load = 0;
+	unsigned int cpu_load = dbs_update(policy);
+	unsigned int target_freq_percent = 0;
 
 	/* Update network load sensing */
 	update_download_speed();
@@ -212,7 +214,18 @@ static void dvfs_update(struct cpufreq_policy *policy)
 	/* Calculate the next frequency proportional to resources load */
 	min_f = policy->cpuinfo.min_freq;
 	max_f = policy->cpuinfo.max_freq;
-	freq_next = min_f + (100 - network_load) * (max_f - min_f) / 100;
+
+	// TODO: Make smarter decision here
+	target_freq_percent = 1 * cpu_load + -1 * network_load;
+
+	// boundaries safecheck for target_freq_percent
+	if (target_freq_percent < 0)
+		target_freq_percent = 0;
+	if (target_freq_percent > 100)
+		target_freq_percent = 100;
+
+	target_freq_percent = 100 - target_freq_percent; // first array item = highest frequency
+	freq_next = min_f + target_freq_percent * (max_f - min_f) / 100;
 
 	/* Set CPU frequency target */
 	if (dvfs_tuners->powersave_bias) {
@@ -221,7 +234,7 @@ static void dvfs_update(struct cpufreq_policy *policy)
 	__cpufreq_driver_target(policy, freq_next, CPUFREQ_RELATION_C);
 
 	/* Do some prints */
-	printk(KERN_INFO "dvfs_update: set frequency to %u Hz (~%u percent) - network load ~= %u Kb/s", freq_next, network_load, download_speed);
+	printk(KERN_INFO "dvfs_update: set frequency to %u MHz - network load ~= %u Kb/s (~%u percent). cpu_load=%u", freq_next / 1024, download_speed, network_load, cpu_load);
 }
 
 static unsigned int dvfs_dbs_update(struct cpufreq_policy *policy)
