@@ -32,7 +32,7 @@
  */
 #define NB_VALUE_FOR_MEAN   10
 static __u8 meanCounter = 0;
-static __u64 mean = 0, download_speed = 0;
+static unsigned int mean = 0, download_speed = 0;
 static __u64 old_tr_bytes = 0;
 
 static void update_download_speed(void){
@@ -56,7 +56,7 @@ static void update_download_speed(void){
 		}
 		read_unlock(&dev_base_lock);
 
-		return 0;
+		return;
 	}
 
 	net_stats = dev_get_stats(dev, &temp);
@@ -173,22 +173,6 @@ static void dvfs_powersave_bias_init(struct cpufreq_policy *policy)
 	dbs_info->freq_lo = 0;
 }
 
-static void dbs_freq_increase(struct cpufreq_policy *policy, unsigned int freq)
-{
-	struct policy_dbs_info *policy_dbs = policy->governor_data;
-	struct dbs_data *dbs_data = policy_dbs->dbs_data;
-	struct dvfs_dbs_tuners *dvfs_tuners = dbs_data->tuners;
-
-	if (dvfs_tuners->powersave_bias)
-		freq = dvfs_ops.powersave_bias_target(policy, freq,
-				CPUFREQ_RELATION_H);
-	else if (policy->cur == policy->max)
-		return;
-
-	__cpufreq_driver_target(policy, freq, dvfs_tuners->powersave_bias ?
-			CPUFREQ_RELATION_L : CPUFREQ_RELATION_H);
-}
-
 /*
  * Every sampling_rate, we check, if current idle time is less than 20%
  * (default), then we try to increase frequency. Else, we adjust the frequency
@@ -196,54 +180,48 @@ static void dbs_freq_increase(struct cpufreq_policy *policy, unsigned int freq)
  */
 static void dvfs_update(struct cpufreq_policy *policy)
 {
-	//printk(KERN_INFO "policy->cpuinfo : %)", policy->cpuinfo);
-	//printk(KERN_INFO "dvfs_update: policy min/current/max : %u - %u - %u", policy->min, policy->cur, policy->max);
-
-        /*
-        int i;
-        for(i=0 ; (policy->freq_table[i].frequency != CPUFREQ_TABLE_END) ; i++) {
-            printk(KERN_INFO "\t frequency: %u", policy->freq_table[i].frequency);
-        }
-        */
-        update_download_speed();
-        print_net_stats();
-
-
 	struct policy_dbs_info *policy_dbs = policy->governor_data;
-	struct dvfs_policy_dbs_info *dbs_info = to_dbs_info(policy_dbs);
 	struct dbs_data *dbs_data = policy_dbs->dbs_data;
 	struct dvfs_dbs_tuners *dvfs_tuners = dbs_data->tuners;
-	unsigned int load = dbs_update(policy);
+	struct cpufreq_frequency_table *freq_table = policy->freq_table;
+	unsigned int freq_next, min_f, max_f;
+	unsigned int network_load = 0;
+	unsigned int n_frequencies = 0;
 
-        // Print the samplig rate -- The amount of time the governor is called (in uS)
-        //printk(KERN_INFO "\t sampling rate: %u",dbs_data->sampling_rate);
-
-	dbs_info->freq_lo = 0;
-
-	/* Check for frequency increase */
-	if (load > dbs_data->up_threshold) {
-		/* If switching to max speed, apply sampling_down_factor */
-		if (policy->cur < policy->max)
-			policy_dbs->rate_mult = dbs_data->sampling_down_factor;
-		dbs_freq_increase(policy, policy->max);
+	/* Update network load sensing */
+	update_download_speed();
+        
+	/* Network load decision rules */
+	if (download_speed < 50) { // under 50 Kbps
+		network_load = 0; // 0% "load"
+	} else if (download_speed < 500) {
+		network_load = 10;
+	} else if (download_speed < 2048) {
+		network_load = 30;
+	} else if (download_speed < 5120) {
+		network_load = 70;
 	} else {
-		/* Calculate the next frequency proportional to load */
-		unsigned int freq_next, min_f, max_f;
-
-		min_f = policy->cpuinfo.min_freq;
-		max_f = policy->cpuinfo.max_freq;
-		freq_next = min_f + load * (max_f - min_f) / 100;
-
-		/* No longer fully busy, reset rate_mult */
-		policy_dbs->rate_mult = 1;
-
-		if (dvfs_tuners->powersave_bias)
-			freq_next = dvfs_ops.powersave_bias_target(policy,
-								 freq_next,
-								 CPUFREQ_RELATION_L);
-
-		__cpufreq_driver_target(policy, freq_next, CPUFREQ_RELATION_C);
+		network_load = 100;
 	}
+
+	/* For printing purpose, get the number of frequencies */
+	while (policy->freq_table[n_frequencies].frequency != CPUFREQ_TABLE_END) {
+		n_frequencies++;
+	}
+
+	/* Calculate the next frequency proportional to resources load */
+	min_f = policy->cpuinfo.min_freq;
+	max_f = policy->cpuinfo.max_freq;
+	freq_next = min_f + (100 - network_load) * (max_f - min_f) / 100;
+
+	/* Set CPU frequency target */
+	if (dvfs_tuners->powersave_bias) {
+		freq_next = dvfs_ops.powersave_bias_target(policy, freq_next, CPUFREQ_RELATION_L);
+	}
+	__cpufreq_driver_target(policy, freq_next, CPUFREQ_RELATION_C);
+
+	/* Do some prints */
+	printk(KERN_INFO "dvfs_update: set frequency to %u Hz (~%u percent) - network load ~= %u Kb/s", freq_next, network_load, download_speed);
 }
 
 static unsigned int dvfs_dbs_update(struct cpufreq_policy *policy)
