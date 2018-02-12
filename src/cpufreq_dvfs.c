@@ -45,25 +45,20 @@ void update_download_speed(unsigned long data){
     printk(KERN_INFO, "updating download speed");
 
     //char* interface = "eth0";
-    char* interface = "wlp3s0";
-    dev = dev_get_by_name(&init_net, interface);
-    if (!dev) {
-        printk(KERN_ERR "interface %s not found. Available interfaces :\n", interface);
+    read_lock(&dev_base_lock);
 
-        read_lock(&dev_base_lock);
+    tr_bytes = 0;
+    dev = first_net_device(&init_net);
+    while (dev) {
+        net_stats = dev_get_stats(dev, &temp);
+        tr_bytes += net_stats->tx_bytes + net_stats->rx_bytes;
 
-        dev = first_net_device(&init_net);
-        while (dev) {
-                printk(KERN_ERR " - [%s]\n", dev->name);
-                dev = next_net_device(dev);
-        }
-        read_unlock(&dev_base_lock);
 
-        return;
+        // next network interface
+        dev = next_net_device(dev);
     }
 
-    net_stats = dev_get_stats(dev, &temp);
-    tr_bytes = net_stats->tx_bytes + net_stats->rx_bytes;
+    read_unlock(&dev_base_lock);
 
     // compute the number of packet received since the last call of the governor
     diffByte = tr_bytes - old_tr_bytes;
@@ -73,6 +68,8 @@ void update_download_speed(unsigned long data){
     download_speed = diffByte / 1024 ;
     printk(KERN_INFO "download speed: %u", download_speed);
     mod_timer(&network_timer, jiffies + msecs_to_jiffies(1000));
+
+    return;
  }
 
 /* DVFS governor macros */
