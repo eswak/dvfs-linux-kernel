@@ -20,6 +20,7 @@
 #include <linux/percpu-defs.h>
 #include <linux/slab.h>
 #include <linux/tick.h>
+#include <linux/timer.h>
 #include <linux/netdevice.h>
 #include "cpufreq_dvfs.h"
 
@@ -31,54 +32,48 @@
  * Formula: mean / NB_VALUE_USED / 1024 * 100
  */
 #define NB_VALUE_FOR_MEAN   10
-static __u8 meanCounter = 0;
-static unsigned int mean = 0, download_speed = 0;
+static unsigned int download_speed = 0;
 static __u64 old_tr_bytes = 0;
+static struct timer_list network_timer;
 
-static void update_download_speed(void){
-	struct net_device *dev;
-	struct rtnl_link_stats64 temp;
-	struct rtnl_link_stats64 *net_stats;
-	__u64 tr_bytes, diffByte;
+void update_download_speed(unsigned long data){
+    struct net_device *dev;
+    struct rtnl_link_stats64 temp;
+    struct rtnl_link_stats64 *net_stats;
+    __u64 tr_bytes, diffByte;
 
-	//char* interface = "eth0";
-	char* interface = "wlp2s0";
-	dev = dev_get_by_name(&init_net, interface);
-	if (!dev) {
-		printk(KERN_ERR "interface %s not found. Available interfaces :\n", interface);
+    printk(KERN_INFO, "updating download speed");
 
-		read_lock(&dev_base_lock);
+    //char* interface = "eth0";
+    char* interface = "wlp3s0";
+    dev = dev_get_by_name(&init_net, interface);
+    if (!dev) {
+        printk(KERN_ERR "interface %s not found. Available interfaces :\n", interface);
 
-		dev = first_net_device(&init_net);
-		while (dev) {
-			printk(KERN_ERR " - [%s]\n", dev->name);
-			dev = next_net_device(dev);
-		}
-		read_unlock(&dev_base_lock);
+        read_lock(&dev_base_lock);
 
-		return;
-	}
-
-	net_stats = dev_get_stats(dev, &temp);
-        tr_bytes = net_stats->tx_bytes + net_stats->rx_bytes;
-
-        // compute the number of packet received since the last call of the governor
-        diffByte = tr_bytes - old_tr_bytes;
-        old_tr_bytes = tr_bytes;
-
-        // Add this value to the mean and compute the average download speed every NB_VALUE_FOR_MEAN 
-        // execution.
-        if (meanCounter != NB_VALUE_FOR_MEAN) {
-            meanCounter += 1;
-            mean += diffByte;
-
-        } else {
-            meanCounter = 0;
-            download_speed = mean / NB_VALUE_FOR_MEAN;
-            printk(KERN_INFO "download speed: %u", download_speed / 1024 * 100);
-            mean = 0;
+        dev = first_net_device(&init_net);
+        while (dev) {
+                printk(KERN_ERR " - [%s]\n", dev->name);
+                dev = next_net_device(dev);
         }
-}
+        read_unlock(&dev_base_lock);
+
+        return;
+    }
+
+    net_stats = dev_get_stats(dev, &temp);
+    tr_bytes = net_stats->tx_bytes + net_stats->rx_bytes;
+
+    // compute the number of packet received since the last call of the governor
+    diffByte = tr_bytes - old_tr_bytes;
+    old_tr_bytes = tr_bytes;
+
+    // Add this value to the mean and compute the average download speed every NB_VALUE_FOR_MEAN 
+    download_speed = diffByte / 1024 ;
+    printk(KERN_INFO "download speed: %u", download_speed);
+    mod_timer(&network_timer, jiffies + msecs_to_jiffies(1000));
+ }
 
 /* DVFS governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(80)
@@ -191,7 +186,8 @@ static void dvfs_update(struct cpufreq_policy *policy)
 	unsigned int target_freq_percent = 0;
 
 	/* Update network load sensing */
-	update_download_speed();
+	//update_download_speed();
+
         
 	/* Network load decision rules */
 	if (download_speed < 50) { // under 50 Kbps
@@ -234,7 +230,7 @@ static void dvfs_update(struct cpufreq_policy *policy)
 	__cpufreq_driver_target(policy, freq_next, CPUFREQ_RELATION_C);
 
 	/* Do some prints */
-	printk(KERN_INFO "dvfs_update: set frequency to %u MHz - network load ~= %u Kb/s (~%u percent). cpu_load=%u", freq_next / 1024, download_speed, network_load, cpu_load);
+	//printk(KERN_INFO "dvfs_update: set frequency to %u MHz - network load ~= %u Kb/s (~%u percent). cpu_load=%u", freq_next / 1024, download_speed, network_load, cpu_load);
 }
 
 static unsigned int dvfs_dbs_update(struct cpufreq_policy *policy)
@@ -459,12 +455,18 @@ static int dvfs_init(struct dbs_data *dbs_data)
 	dbs_data->io_is_busy = should_io_be_busy();
 
 	dbs_data->tuners = tuners;
+
+        // Init timer for network monitoring
+        // Call update_download_speed function every 100 ms
+        setup_timer(&network_timer, update_download_speed, 0);
+        mod_timer(&network_timer, jiffies + msecs_to_jiffies(100));
 	return 0;
 }
 
 static void dvfs_exit(struct dbs_data *dbs_data)
 {
 	kfree(dbs_data->tuners);
+        del_timer(&network_timer);
 }
 
 static void dvfs_start(struct cpufreq_policy *policy)
