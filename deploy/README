@@ -17,7 +17,10 @@ At first it is required to reserver nodes in grid5000. Conecet to one sites of g
 
 7) bash deploy/main.sh
 	# deploy cluster
-
-8) mkdir data/;  python AutoExecution/main.py --nodes deploy/cluster.txt -s lyon -o data/
+8) bash postdeploy-smarth-governor.sh
+	# change kernel to 4.10
+9) bash buildSmartGovernor.sh
+	# run smart governor 
+10) mkdir data/;  python AutoExecution/main.py --nodes deploy/cluster.txt -s lyon -o data/
 	#run experiment from Measurment/AutoExecution module
-	
+
