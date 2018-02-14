@@ -16,12 +16,14 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/types.h>
 #include <linux/cpu.h>
 #include <linux/percpu-defs.h>
 #include <linux/slab.h>
 #include <linux/tick.h>
 #include <linux/timer.h>
 #include <linux/netdevice.h>
+#include <linux/mm.h>
 #include "cpufreq_dvfs.h"
 
 /* Used for computation of the download speed
@@ -36,7 +38,11 @@ static unsigned int download_speed = 0;
 static __u64 old_tr_bytes = 0;
 static struct timer_list network_timer;
 
-void update_download_speed(unsigned long data){
+/* Memory load variables */
+static unsigned int memory_load;
+
+void update_network_metrics(void)
+{
     struct net_device *dev;
     struct rtnl_link_stats64 temp;
     struct rtnl_link_stats64 *net_stats;
@@ -68,9 +74,28 @@ void update_download_speed(unsigned long data){
     download_speed = diffByte / 1024 ;
     printk(KERN_INFO "download speed: %u", download_speed);
     mod_timer(&network_timer, jiffies + msecs_to_jiffies(1000));
+}
 
+void update_memory_metrics(void)
+{
+	struct sysinfo ram_info;
+	si_meminfo(&ram_info);
+	__kernel_long_t total = ram_info.totalram * ram_info.mem_unit;
+	__kernel_long_t free = ram_info.freeram * ram_info.mem_unit;
+	memory_load = 100 - (100 * free) / total;
+
+	if (memory_load > 100)
+		memory_load = 100;
+	if (memory_load < 0)
+		memory_load = 0;
+}
+
+void update_load_metrics(unsigned long data)
+{
+    update_network_metrics();
+    update_memory_metrics();
     return;
- }
+}
 
 /* DVFS governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(80)
@@ -181,10 +206,6 @@ static void dvfs_update(struct cpufreq_policy *policy)
 	unsigned int network_load = 0;
 	unsigned int cpu_load = dbs_update(policy);
 	unsigned int target_freq_percent = 0;
-
-	/* Update network load sensing */
-	//update_download_speed();
-
         
 	/* Network load decision rules */
 	if (download_speed < 50) { // under 50 Kbps
@@ -227,7 +248,7 @@ static void dvfs_update(struct cpufreq_policy *policy)
 	__cpufreq_driver_target(policy, freq_next, CPUFREQ_RELATION_C);
 
 	/* Do some prints */
-	//printk(KERN_INFO "dvfs_update: set frequency to %u MHz - network load ~= %u Kb/s (~%u percent). cpu_load=%u", freq_next / 1024, download_speed, network_load, cpu_load);
+	printk(KERN_INFO "dvfs_update: set frequency to %u MHz - network load ~= %u Kb/s (~%u percent). cpu_load=%u. memory_load=%u", freq_next / 1024, download_speed, network_load, cpu_load, memory_load);
 }
 
 static unsigned int dvfs_dbs_update(struct cpufreq_policy *policy)
@@ -454,8 +475,8 @@ static int dvfs_init(struct dbs_data *dbs_data)
 	dbs_data->tuners = tuners;
 
         // Init timer for network monitoring
-        // Call update_download_speed function every 100 ms
-        setup_timer(&network_timer, update_download_speed, 0);
+        // Call update_load_metrics function every 100 ms
+        setup_timer(&network_timer, update_load_metrics, 0);
         mod_timer(&network_timer, jiffies + msecs_to_jiffies(100));
 	return 0;
 }
