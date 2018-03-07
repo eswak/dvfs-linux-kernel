@@ -1,24 +1,33 @@
 #!/bin/bash
-# used for matplotlib 
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+cd $DIR;
+
+# used for matplotlib
 export MPLBACKEND="agg"
-cd /home/amkoyan/DVFS/deploy
 
+# deploy shared ssh keys to remote server
+pssh -h ./cluster.txt -l root -I < ./deploySshKeys.sh
 
-# deploy shared ssh keys to remote server 
-/home/amkoyan/.local/bin/pssh -h cluster.txt  -l root -I< deploySshKeys.sh
+# deploy /etc/hosts
+./makeHosts.sh
 
-# dep /etc/hosts 
-bash makeHosts.sh
 # Send Data dir to remote hosts
-bash syncData.sh
+./syncData.sh
 
 # Get and Install MPI
 # compile,set up,prepare cluster
-/home/amkoyan/.local/bin/pssh -h cluster.txt  -l root -t 0 -P -I< deployCluster.sh
+pssh -h ./cluster.txt -l root -t 0 -P -I < ./deployCluster.sh
 
-# run os optimization 
-/home/amkoyan/.local/bin/pssh -h cluster.txt  -l root -t 0 -P -I< perfOpt.sh
-#/home/amkoyan/.local/bin/pssh -h cluster.txt  -l root -t 0 -P -I< deployWRF.sh
+# run os optimization
+pssh -h ./cluster.txt -l root -t 0 -P -I < ./perfOpt.sh
+#pssh -h ./cluster.txt -l root -t 0 -P -I < ./deployWRF.sh
 
 # Map host:freq
-bash getHostnameFreq.sh > hostname-freq.txt
+./getHostnameFreq.sh > ./hostname-freq.txt
