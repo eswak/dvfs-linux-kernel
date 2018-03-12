@@ -1,8 +1,7 @@
 # Linux Kernel DVFS CPU Governor
 ## Setup your environment
-1) Download VMWare Workstation Player 14
 2) Download Ubuntu latest stable release (Ubuntu 16.04.3 LTS)
-3) Install your VM with ubuntu
+3) Install it
 4) Log in, open a terminal, and run :
 ```shell
 # should output your kernel version : 4.13.0-36-generic
@@ -12,6 +11,8 @@ uname -r
 sudo apt install linux-source-4.13.0
 sudo apt install linux-headers-4.13.0-36-generic
 sudo apt install linux-image-4.13.0-36-generic
+
+# install python dependencies
 sudo apt install python-pip
 pip install pssh
 
@@ -35,8 +36,22 @@ make install # install the mod on your current VM (you need to build it first of
 make remove # uninstall the mod
 ```
 ```shell
-make log # show the kernel logs; any new log will be displayed in real time
+make log # show the kernel logs; just an alias for dmesg
+make tail # stream kernel logs in real time; any new log will be displayed
 ```
+```shell
+make set # set your CPU frequency management governor
+```
+```shell
+make unset # unset your CPU frequency management governor
+```
+
+So, a basic workflow when doing experiments should look like :
+```shell
+make build ; make install ; make set
+make unset ; make remove
+```
+
 ## Run experiment
 
 ### Register an account on grid5000
@@ -45,19 +60,14 @@ https://www.grid5000.fr/mediawiki/index.php/Grid5000:Get_an_account
 ### Connect to grid5000
 > Note : fore more informations on this part, you can also check [the Getting Started guide of grid5000](https://www.grid5000.fr/mediawiki/index.php/Getting_Started#Connecting_for_the_first_time)
 
-1) add your ssh key (the one of which you provided the public key to grid5000)
 ```
-# add in your ~/.bashrc
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_rsa
+# add in your ~/.ssh/config
+Host g5k
+        HostName access.grid5000.fr
+        User username
+        IdentityFile ~/.ssh/id_rsa  
 ```
-
-2) connect to the global access machine
-```
-# add in your ~/.bashrc
-alias g5k='ssh username@access.grid5000.fr'
-```
-Then in your shell : `g5k`
+Then to connect you'll type in your shell : `ssh g5k`
 
 ### Reserve nodes
 > Note : fore more informations on this part, you can also check [the Getting Started guide of grid5000](https://www.grid5000.fr/mediawiki/index.php/Getting_Started#Connecting_for_the_first_time)
@@ -68,12 +78,19 @@ ssh frontend.lyon
 ```
 Once connected to the Lyon frontend, we'll reserve 2 nodes for 3 hours.
 ```
-oarsub -I -l nodes=2,walltime=3 -t deploy
+oarsub -I -p "wattmeter='YES' and cluster='nova'" -l nodes=2,walltime=1:30 -t deploy
+cat $OAR_NODE_FILE
 ```
-Copy the content of the $OAR_NODE_FILE file in `deploy/cluster.txt`.
+Copy your hosts from the $OAR_NODE_FILE file in `./deploy/cluster.txt`.
 
-### Install nodes
+### Install OS on nodes
 TODO: more details here
 ```
-kadeploy3 -f $OAR_NODE_FILE -e debian9-x64-base -k
+kadeploy3 -f $OAR_NODE_FILE -e debian9-x64-min -k
+```
+
+### Install benchmarks & experiment code on nodes
+TODO: more details here
+```
+./deploy/main.sh
 ```
