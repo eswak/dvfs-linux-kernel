@@ -5,7 +5,7 @@
 3) Install your VM with ubuntu
 4) Log in, open a terminal, and run :
 ```shell
-# should output your kernel version : 4.10.0-28-generic
+# should output your kernel version : 4.13.0-36-generic
 uname -r
 
 # install linux-source, linux-headers, and linux-image corresponding to your kernel version

@@ -1,5 +1,5 @@
 /*
- *  Kernel version : 4.10 (ex: Ubuntu 16.04)
+ *  Kernel version : 4.13 (ex: Ubuntu 16.04)
  *  drivers/cpufreq/cpufreq_dvfs.c
  *  based on :
  *  drivers/cpufreq/cpufreq_ondemand.c
