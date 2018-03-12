@@ -21,6 +21,7 @@
 #include <linux/percpu-defs.h>
 #include <linux/slab.h>
 #include <linux/tick.h>
+#include <linux/sched/cpufreq.h>
 #include <linux/timer.h>
 #include <linux/netdevice.h>
 #include <linux/mm.h>
@@ -70,7 +71,7 @@ void update_network_metrics(void)
     diffByte = tr_bytes - old_tr_bytes;
     old_tr_bytes = tr_bytes;
 
-    // Add this value to the mean and compute the average download speed every NB_VALUE_FOR_MEAN 
+    // Add this value to the mean and compute the average download speed every NB_VALUE_FOR_MEAN
     download_speed = diffByte / 1024 ;
     printk(KERN_INFO "download speed: %u", download_speed);
     mod_timer(&network_timer, jiffies + msecs_to_jiffies(1000));
@@ -206,7 +207,7 @@ static void dvfs_update(struct cpufreq_policy *policy)
 	unsigned int network_load = 0;
 	unsigned int cpu_load = dbs_update(policy);
 	unsigned int target_freq_percent = 0;
-        
+
 	/* Network load decision rules */
 	if (download_speed < 50) { // under 50 Kbps
 		network_load = 0; // 0% "load"

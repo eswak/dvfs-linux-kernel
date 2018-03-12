@@ -9,9 +9,9 @@
 uname -r
 
 # install linux-source, linux-headers, and linux-image corresponding to your kernel version
-sudo apt install linux-source-4.10.0
-sudo apt install linux-headers-4.10.0-28-generic
-sudo apt install linux-image-4.10.0-28-generic
+sudo apt install linux-source-4.13.0
+sudo apt install linux-headers-4.13.0-36-generic
+sudo apt install linux-image-4.13.0-36-generic
 sudo apt install python-pip
 pip install pssh
 

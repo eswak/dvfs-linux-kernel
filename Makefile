@@ -3,7 +3,7 @@ SHELL := /bin/bash		# use bash syntax
 ifneq ($(KERNELRELEASE),)
 obj-m	:= src/cpufreq_dvfs.o
 else
-KDIR	?= /lib/modules/`uname -r`/build
+KDIR	?= /lib/modules/4.13.0-36-generic/build
 PWD	:= $(shell pwd)
 NBPROC 	?= $(shell cat /proc/cpuinfo | grep processor | wc -l)
 
