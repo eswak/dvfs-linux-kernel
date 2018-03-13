@@ -5,7 +5,7 @@ At first it is required to reserver nodes in grid5000. Conecet to one sites of g
 2) ssh nancy 
 	# go to nancy site or other
 
-3) scree
+3) screen
 	# get sreen for uninteraptable ssh session
 
 4)oarsub -p "wattmeter='YES'" -I -l cluster=1/nodes=2,walltime=4:0:0 -t deploy
