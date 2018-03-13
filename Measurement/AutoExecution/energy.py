@@ -7,25 +7,19 @@ class JSONObject:
     def __init__(self, d):
         self.__dict__ = d
 
-def collect_metric(startTime,endTime,metric,result_dir,site,resultFile):
-
+def collect_metric(startTime,endTime,metric,result_dir,site,resultFile,hostname):
     std=resultFile+'_std.txt'
     ste=resultFile+'_err.txt'
-    stdCSV=resultFile+'CSV.txt'
+    stdCSV=resultFile+'.csv'
 
     if not os.path.exists(result_dir):
         os.mkdir(result_dir)
 
-    with open("/home/amkoyan/DVFS/deploy/cluster.txt", "r") as hosts:
-        listSplit = list()
-        lines = hosts.readlines()
-        for i in lines:
-            listSplit.append(i.split('.')[0])
-        data = ",".join(line for line in listSplit)
+    host = hostname.split('.')[0]
 
-    cmd_template = ("curl -kn ""https://api.grid5000.fr/stable/sites/{site}/metrics/{metric}/timeseries?resolution=15&only={data}&from={startTime}&to={endTime}")
-
-    cmd = cmd_template.format(site=site,data=data,startTime=startTime,metric=metric,endTime=endTime)
+    cmd_template = ( 'curl -kn "https://api.grid5000.fr/stable/sites/{site}/metrics/{metric}/timeseries?resolution=15&only={hostname}&from={startTime}&to={endTime}"')
+    cmd = cmd_template.format(site=site, metric=metric, hostname=host, startTime=startTime, endTime=endTime)
+    print(cmd)
 
     collector = execo.Process(cmd=cmd)
     collector.run()
@@ -56,8 +50,6 @@ def collect_metric(startTime,endTime,metric,result_dir,site,resultFile):
                 item_index += 1
                 for index in range(len(item.values)):
                     out.write("%s,%f,%s\n" % (host_name, timestamp[index], item.values[index]))
-
-
 
 # stuff to run always here such as class/def
 def main():

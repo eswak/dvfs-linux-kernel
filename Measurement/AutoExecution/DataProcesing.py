@@ -4,10 +4,6 @@ import pandas as pd
 import shutil
 
 class Preprocesign:
-'''
-This class intended for data clustering because we do the same experiment multiple time. It is just science.
-'''
-
     def __init__( self,dataDir,net,host):
         self.dataDir = dataDir
         self.net = net

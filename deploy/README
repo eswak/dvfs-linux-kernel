@@ -22,9 +22,16 @@ At first it is required to reserver nodes in grid5000. Conecet to one sites of g
 	7.2) 
 		bash deploy/main.sh
 		# start deployment cluster
-8) bash postdeploy-smarth-governor.sh
-	# change kernel to 4.10
+8) 
+	8.1)
+		bash postdeploy-smarth-governor.sh
+		# After sucsessfull deployment run post deploy manualy on each node to change kernel to 4.10
+	8.2)
+		screen -d -m sh -c '/tmp/NPB/bin/sar.sh'
+		# sysstat script removes afters restart, so ensure that is runing 
 9) bash buildSmartGovernor.sh
 	# run smart governor
+	# make sure you are using right kernel folder, deployment script use "/lib/modules/4.10.0-20-generic/build"
+
 10) mkdir data/;  python AutoExecution/main.py --nodes deploy/cluster.txt -s lyon -o data/
 	#run experiment from Measurment/AutoExecution module

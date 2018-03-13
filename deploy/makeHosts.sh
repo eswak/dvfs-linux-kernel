@@ -10,6 +10,6 @@ for ((i=0; i<${#hostname[@]}; i++));
 for host in ${hostname[@]}
  do
   scp hosts root@$host:/etc/hosts
-  scp cluster.txt root@$host:/root/
+  scp cluster.txt postdeploy-smarth-governor.sh buildSmartGovernor.sh root@$host:/root/
  done
 rm $(pwd)/hosts

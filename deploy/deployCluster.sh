@@ -160,8 +160,7 @@ done
 
 # ENV
 echo 'source /opt/intel-performance-snapshoot/apsvars.sh' >> /root/.bashrc
-
 # run sar for launching sar.sh script. scripts change the measurment rate to lower value than allowe (0.5s)
-if [[ -z $(ps aux|grep -i /tmp/hadoop/sbin/sar.sh |grep -v 'grep') ]];then
-	screen -d -m sh -c '/tmp/hadoop/sbin/sar.sh'
+if [[ -z $(ps aux|grep -i sar.sh |grep -v 'grep') ]];then
+	screen -d -m sh -c '/tmp/NPB/bin/sar.sh'
 fi

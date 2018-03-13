@@ -28,4 +28,4 @@ pssh -h ./cluster.txt -l root -t 0 -P -I < ./perfOpt.sh
 #pssh -h ./cluster.txt -l root -t 0 -P -I < ./deployWRF.sh
 
 # Map host:freq
-./getHostnameFreq.sh > ./hostname-freq.txt
+bash getHostnameFreq.sh > ./hostname-freq.txt

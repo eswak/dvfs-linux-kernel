@@ -27,39 +27,8 @@ class DVFS(Engine):
 
     def define_parameters(self):
         nbNodes = len(self.cluster)
-        
-        # make serverID:[freq] map
-        def hostFreq(filename='/home/amkoyan/DVFS/deploy/hostname-freq.txt'):
-            dataList = {}
-            with open(filename, "r") as f:
-                for row in f.read().splitlines():
-                    host, freq = row.split(':')
-                    listfreq = []
-                    listfreq.append(freq.split(' '))
-                    dataList[host] = listfreq
-                return dataList
-
-        # get max from supported freq list per server 
-        def minMaxAvg(hF=hostFreq()):
-            minList = []
-            maxList = []
-            avg_list = []
-            for hostname, freq in hF.items():
-                m = min(hF[hostname][0])
-                minList.append(m)
-
-                ma = max(hF[hostname][0])
-                maxList.append(ma)
-
-                avg = hF[hostname][0]
-                length = len(avg)
-                avg_list.append(avg[int(length / 2)])
-
-            return max(minList), min(maxList), max(avg_list)
-
-
         # build parameters and make nbCore list per benchmark
-        freqList = list(minMaxAvg())
+        freqList = [2534000,2000000,1200000]
         n_nodes = float(len(self.cluster))
         max_core = SshProcess('cat /proc/cpuinfo | grep -i processor |wc -l',self.cluster[0],connection_params={'user': 'root'}).run().stdout
         max_core =  n_nodes * float(max_core)
@@ -72,24 +41,24 @@ class DVFS(Engine):
             "Freq": [2534000],
             "NPBclass" : ['C'],
             "Benchmark": {
-                'ft': {
-                    'n_core': even
-                    },
-                'ep': {
-                    'n_core': even
-                    },
-                'lu': {
-                    'n_core': even
-                    },
-                'is': {
-                    'n_core': even
-                    },
-                'sg': {
-                    'n_core': even
-                    },
-                'bt': {
-                    'n_core': powerTwo
-                    },
+                # 'ft': {
+                #     'n_core': even
+                #     },
+                # 'ep': {
+                #     'n_core': even
+                #     },
+                # 'lu': {
+                #     'n_core': even
+                #     },
+                # 'is': {
+                #     'n_core': even
+                #     },
+                # 'sg': {
+                #     'n_core': even
+                #     },
+                # 'bt': {
+                #     'n_core': powerTwo
+                #     },
                 'sp': {
                     'n_core': powerTwo
                     }
@@ -116,7 +85,7 @@ class DVFS(Engine):
                 # metric from linux sar tools, works with clock
                 def takeMetric(path,startTime,endTime,metric=['cpu','mem','disk','swap','network']):
                     opt=''
-                    cmd_template_sar = ("sar -f  /var/log/sa/sa* -{opt} -s {startTime} -e {endTime}")
+                    cmd_template_sar = ("sar -f /var/log/sysstat/sa* -{opt} -s {startTime} -e {endTime}")
                     for met in metric:
                         if met == 'cpu':
                             opt='u'
@@ -194,15 +163,17 @@ class DVFS(Engine):
                 takeMetric(curPath,start24Hour,end24Hour,['cpu','mem','disk','swap','network'])
 
                 # collect power from kWAPI: grid5000 infrastructure made tool
-                collect_metric(startUnix,endUnix,'power',curPath,self.site,'power')
+                for hostname in self.cluster:   
+                    powerOut = '{}_power'.format(hostname)
+                    collect_metric(startUnix,endUnix,'power',curPath,self.site,powerOut,hostname)
+
 
                 st = '/tmp/out/' + slugify(comb)
-                intelStoragePerf = str(st + '.dat')
                 intelAppPerf = str(st + '.html')
 
                 # get the data from ['Application Performance Snapshot', 'Storage Performance Snapshot']
                 # https://software.intel.com/en-us/performance-snapshot
-                Get(master, [intelAppPerf,intelStoragePerf],curPath,connection_params={'user': 'root'}).run()
+                Get(master, [intelAppPerf],curPath,connection_params={'user': 'root'}).run()
                 if task1:
                     logger.info("comb ok: %s" % (comb,))
                     self.sweeper.done(comb)

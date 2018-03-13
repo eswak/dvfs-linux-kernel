@@ -11,7 +11,6 @@ parser.add_option(
                     default="/home/amkoyan/DVFS/deploy/cluster.txt"
                   )
 
-
 parser.add_option(
                     "-o",
                     "--outDir",
@@ -19,6 +18,7 @@ parser.add_option(
                     help="Output Path",
                     default="/home/amkoyan/DVFS/Measurement/data/"
                   )
+
 parser.add_option(
                     "-s",
                     "--site",
@@ -49,11 +49,11 @@ def main():
     path = options.outDir
     grid5000site = options.site
 
-    # startProcess = DVFS(path,cluster,grid5000site)
-    # startProcess.run()
+    startProcess = DVFS(path,cluster,grid5000site)
+    startProcess.run()
 
-    analyzesData = DrawGrpah(options.device,cluster)
-    analyzesData.plotExpimetnCombination()
+    # analyzesData = DrawGrpah(options.device,cluster)
+    # analyzesData.plotExpimetnCombination()
 
 if __name__ == "__main__":
     main()
