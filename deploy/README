@@ -15,8 +15,13 @@ At first it is required to reserver nodes in grid5000. Conecet to one sites of g
 	# "ubuntu16.04-x64-min.env" file in src/deploy
 6) copy hostnames to src/deploy/cluster.txt
 
-7) bash deploy/main.sh
-	# deploy cluster
+7)  
+	7.1)
+		export PATH=$PATH:/home/$(USER)/.local/bin/
+		# befor starting export local python bin path
+	7.2) 
+		bash deploy/main.sh
+		# start deployment cluster
 8) bash postdeploy-smarth-governor.sh
 	# change kernel to 4.10
 9) bash buildSmartGovernor.sh
