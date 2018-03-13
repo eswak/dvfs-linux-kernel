@@ -1,6 +1,6 @@
 At first it is required to reserver nodes in grid5000. Conecet to one sites of grid5000.
 
-1) ssh amkoyan@access.grid500.fr 
+1) ssh amkoyan@access.grid500.fr
 	# change amkoyan to your username
 2) ssh nancy 
 	# go to nancy site or other
@@ -11,8 +11,8 @@ At first it is required to reserver nodes in grid5000. Conecet to one sites of g
 4)oarsub -p "wattmeter='YES'" -I -l cluster=1/nodes=2,walltime=4:0:0 -t deploy
 	# have look to resource property
 
-5) kadeploy3 -a ubuntu16.04-x64-min.env  -f $OAR_FILE_NODES -k 
-	# "ubuntu16.04-x64-min.env" file in src/deploy 
+5) kadeploy3 -a ubuntu16.04-x64-min.env  -f $OAR_FILE_NODES -k
+	# "ubuntu16.04-x64-min.env" file in src/deploy
 6) copy hostnames to src/deploy/cluster.txt
 
 7) bash deploy/main.sh
@@ -20,7 +20,6 @@ At first it is required to reserver nodes in grid5000. Conecet to one sites of g
 8) bash postdeploy-smarth-governor.sh
 	# change kernel to 4.10
 9) bash buildSmartGovernor.sh
-	# run smart governor 
+	# run smart governor
 10) mkdir data/;  python AutoExecution/main.py --nodes deploy/cluster.txt -s lyon -o data/
 	#run experiment from Measurment/AutoExecution module
-

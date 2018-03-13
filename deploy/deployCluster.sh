@@ -11,7 +11,7 @@ if [ -f /etc/debian_version ]; then
     echo "This is debian based distro"
     export DEBIAN_FRONTEND=noninteractive
   	apt-get update
-  	apt-get install -y build-essential automake gfortran sysstat rsync vim cpufrequtils python3 ganglia-monitor
+  	apt-get install -y build-essential automake gfortran sysstat rsync vim cpufreqd cpufrequtils python3 ganglia-monitor screen iptables
     service ganglia-monitor start
     service ganglia-monitor status
     modprobe acpi_cpufreq
@@ -84,7 +84,6 @@ compile_bench ft 16 "${class}"
 compile_bench ft 32 "${class}"
 compile_bench ft 64 "${class}"
 compile_bench ft 128 "${class}"
-compile_bench ft 256 "${class}"
 
 compile_bench mg 2 "${class}"
 compile_bench mg 4 "${class}"
@@ -93,7 +92,6 @@ compile_bench mg 16 "${class}"
 compile_bench mg 32 "${class}"
 compile_bench mg 64 "${class}"
 compile_bench mg 128 "${class}"
-compile_bench mg 256 "${class}"
 
 
 compile_bench lu 2 "${class}"
@@ -103,7 +101,6 @@ compile_bench lu 16 "${class}"
 compile_bench lu 32 "${class}"
 compile_bench lu 64 "${class}"
 compile_bench lu 128 "${class}"
-compile_bench lu 256 "${class}"
 
 
 
@@ -114,7 +111,6 @@ compile_bench is 16 "${class}"
 compile_bench is 32 "${class}"
 compile_bench is 64 "${class}"
 compile_bench is 128 "${class}"
-compile_bench is 256 "${class}"
 
 
 
@@ -125,7 +121,6 @@ compile_bench ep 16 "${class}"
 compile_bench ep 32 "${class}"
 compile_bench ep 64 "${class}"
 compile_bench ep 128 "${class}"
-compile_bench ep 256 "${class}"
 
 
 compile_bench sg 2 "${class}"
@@ -135,7 +130,6 @@ compile_bench sg 16 "${class}"
 compile_bench sg 32 "${class}"
 compile_bench sg 64 "${class}"
 compile_bench sg 128 "${class}"
-compile_bench sg 256 "${class}"
 
 
 
@@ -150,7 +144,6 @@ compile_bench sp 100 "${class}"
 compile_bench sp 121 "${class}"
 compile_bench sp 169 "${class}"
 compile_bench sp 195 "${class}"
-compile_bench sp 225 "${class}"
 
 compile_bench bt 4 "${class}"
 compile_bench bt 16 "${class}"
@@ -163,13 +156,12 @@ compile_bench bt 100 "${class}"
 compile_bench bt 121 "${class}"
 compile_bench bt 169 "${class}"
 compile_bench bt 195 "${class}"
-compile_bench bt 225 "${class}"
 done
 
 # ENV
 echo 'source /opt/intel-performance-snapshoot/apsvars.sh' >> /root/.bashrc
 
 # run sar for launching sar.sh script. scripts change the measurment rate to lower value than allowe (0.5s)
-if [[ -z $(ps aux|grep -i /tmp/NPB/bin/sar.sh |grep -v 'grep') ]];then
-    bash /tmp/NPB/bin/sar.sh &
+if [[ -z $(ps aux|grep -i /tmp/hadoop/sbin/sar.sh |grep -v 'grep') ]];then
+	screen -d -m sh -c '/tmp/hadoop/sbin/sar.sh'
 fi
