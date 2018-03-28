@@ -10,6 +10,12 @@ cd $DIR;
 # used for matplotlib
 export MPLBACKEND="agg"
 
+# install acpi-cpufreq drivers and disable instal_pstate drivers
+# /!\ REQUIRED REBOOT (and therefore to wait)
+pssh -h ./cluster.txt -l root -I < ./changeGrubAndReboot.sh
+echo "Need to wait for thenode to reboot, aproximatively 3 minutes"
+sleep 3m
+
 # deploy shared ssh keys to remote server
 pssh -h ./cluster.txt -l root -I < ./deploySshKeys.sh
 
