@@ -52,8 +52,8 @@ def main():
     startProcess = DVFS(path,cluster,grid5000site)
     startProcess.run()
 
-    # analyzesData = DrawGrpah(options.device,cluster)
-    # analyzesData.plotExpimetnCombination()
+    analyzesData = DrawGrpah(options.device,cluster)
+    analyzesData.plotExpimetnCombination()
 
 if __name__ == "__main__":
     main()
