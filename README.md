@@ -1,5 +1,5 @@
 # Linux Kernel DVFS CPU Governor
-## Setup your environment
+## Setup your environment for local testing
 2) Download Ubuntu latest stable release (Ubuntu 16.04.3 LTS)
 3) Install it
 4) Log in, open a terminal, and run :
@@ -52,7 +52,7 @@ make build ; make install ; make set
 make unset ; make remove
 ```
 
-## Run experiment
+## Run experiment on grid5000
 
 ### Register an account on grid5000
 https://www.grid5000.fr/mediawiki/index.php/Grid5000:Get_an_account
@@ -64,33 +64,10 @@ https://www.grid5000.fr/mediawiki/index.php/Grid5000:Get_an_account
 # add in your ~/.ssh/config
 Host g5k
         HostName access.grid5000.fr
-        User username
+        User your_user_name
         IdentityFile ~/.ssh/id_rsa  
 ```
 Then to connect you'll type in your shell : `ssh g5k`
 
-### Reserve nodes
-> Note : fore more informations on this part, you can also check [the Getting Started guide of grid5000](https://www.grid5000.fr/mediawiki/index.php/Getting_Started#Connecting_for_the_first_time)
-
-Once connected to the global access machine, choose a cluster. For example, we'll use the `lyon` cluster.
-```
-ssh frontend.lyon
-```
-Once connected to the Lyon frontend, we'll reserve 2 nodes for 3 hours.
-```
-oarsub -I -p "wattmeter='YES' and cluster='nova'" -l nodes=2,walltime=1:30 -t deploy
-cat $OAR_NODE_FILE
-```
-Copy your hosts from the $OAR_NODE_FILE file in `./deploy/cluster.txt`.
-
-### Install OS on nodes
-TODO: more details here
-```
-kadeploy3 -f $OAR_NODE_FILE -e debian9-x64-min -k
-```
-
-### Install benchmarks & experiment code on nodes
-TODO: more details here
-```
-./deploy/main.sh
-```
+### Deploy experiment and collect results
+See [README file in the deploy/ folder](deploy/README.md)
