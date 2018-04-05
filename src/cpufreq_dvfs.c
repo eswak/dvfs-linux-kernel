@@ -21,6 +21,7 @@
 #include <linux/percpu-defs.h>
 #include <linux/slab.h>
 #include <linux/tick.h>
+#include <linux/sched/cpufreq.h>
 #include <linux/cpufreq.h>
 #include <linux/timer.h>
 #include <linux/netdevice.h>
